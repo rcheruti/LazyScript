@@ -14,7 +14,18 @@
     
     <script src="js/LazyScript.js"></script>
     <script>
-      lazyScript( 'js/alert.js' );
+      LazyLoader.load( LazyLoader.script( ['js/alert.js'] ) );
+      LazyLoader.load( LazyLoader.css( ['css/style.css'] ) );
+      LazyLoader.add({
+        name: 'style_w500',
+        type: 'css',
+        tag:{
+          src: 'css/style_w500.css'
+        },
+        predicates:{
+          innerWidth: ['>', 500]
+        }
+      });
     </script>
   </body>
 </html>
