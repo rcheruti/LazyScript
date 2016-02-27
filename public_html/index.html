@@ -7,6 +7,11 @@
   </head>
   <body>
     
+    <div>
+      <label>
+        <input type="checkbox" value="" name="" id="tema1Input" /> Usar tema 1
+      </label>
+    </div>
     <div id="log">
       Iniciando:
     </div>
@@ -17,14 +22,25 @@
       LazyLoader.load( LazyLoader.script( ['js/alert.js'] ) );
       LazyLoader.load( LazyLoader.css( ['css/style.css'] ) );
       LazyLoader.add({
-        name: 'style_w500',
-        type: 'css',
-        tag:{
-          src: 'css/style_w500.css'
-        },
+        src: 'css/style_w500.css',
+        predicates:{ innerWidth: ['>', 500] }
+      });
+      LazyLoader.add({
+        src: 'css/style_w400.css',
+        predicates:{ innerWidth: ['<', 400] },
+        remove: false
+      });
+      LazyLoader.add({
+        src: 'css/tema1.css',
         predicates:{
-          innerWidth: ['>', 500]
+          f: function(){
+            var el = document.getElementById('tema1Input');
+            return el.checked;
+          }
         }
+      });
+      document.getElementById('tema1Input').addEventListener('change',function(ev){
+        LazyLoader.refresh();
       });
     </script>
   </body>

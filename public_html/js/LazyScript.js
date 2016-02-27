@@ -15,16 +15,19 @@
    * Estrutura de configuração ao registrar/adicionar um objeto ao Carregador:
    * config: {
    *  name: 'string' : nome desse objeto de configuração, para remover ele depois
-   *  reload: 'boolean' false : informa se ao recolocar o elemento precisamos recarregar do servidor
+   *    // se não for informado, a string usada em "src" será usada como nome
    *  remove: 'boolean' true : informa se a tag pode ser removida após colocada na página,
    *    // isso acontecerá quando uma das restrições/predicados informar falso para essa tag
-   *  type : 'string' '' : informa o tipo de tag que será usado
+   *  type : 'string' 'css' : informa o tipo de tag que será usado
    *    // valores disponíveis: 'js', 'css'
-   *    
+   *  src: 'string' : o link a ser carregado
+   *  
    *  predicates: 'object' {} : informa as restrições dessa configuração
    *    {
-   *      innerHeight: 'array' [ 'string', 'number' ] : verifica com o valor de "window.innerHeight"
-   *      innerWidth: 'array' [ 'string', 'number' ] : verifica com o valor de "window.innerWidth"
+   *      innerHeight: 'array|function' [ 'string', 'number' ] : verifica com o valor de "window.innerHeight"
+   *      innerWidth: 'array|function' [ 'string', 'number' ] : verifica com o valor de "window.innerWidth"
+   *      f: 'function' : função para ser executada para verificar, deve retornar um 'boolean'
+   *      colorDepth: 'array|function' [ 'string', 'number' ] : verifica com o valor de "window.screen.colorDepth"
    *    }
    *  
    *  tag: 'object' : informações da tag que será usada, a configuração da tag que será usada não é possível
@@ -32,22 +35,22 @@
    *      rel: 'string' 'stylesheet' : para css, informa o campo "rel" da tag "link"
    *      type: 'string' 'text/css|text/javascript': informa o campo "type" da tag
    *      async: 'boolean' true : para script, informa o campo "async" (html5) da tag "script"
-   *      src: 'string' : o link a ser carregado
-   *      href: 'string' : o link a ser carregado
-   *       // quando for a hora de escolher o link, será verificado "src" e depois "href",
-   *       // assim pode ser usado qualquer um para definir um link, criando um possível padrão
    *    }
    *  _tag: 'DomNode' : criado pelo Carregador, aqui ficará o elemento da tag que foi 
    *    // colocado no DOM
+   *  _inserted: 'boolean' : criado pelo Carregador, informa se o elemento está inserido no DOM
    *  
    * }
    */
   var body = null,
       configCache = {},
       configCacheRemoved = {},
-      configNamePrefix = '__LazyLoaderPrefix_',
-      configNamePrefixId = 1,
-      logPrefix = 'LazyLoader: ';
+      logPrefix = 'LazyLoader: ',
+      dJsType = 'text/javascript',
+      dCssType = 'text/css',
+      dJsRel = 'script',
+      dCssRel = 'stylesheet';
+  
   
   function _loadBody(){ 
     body = document.getElementsByTagName('body')[0]; 
@@ -64,8 +67,8 @@
     }
   };
   LazyLoader.script = function( scriptsArr, async, type ){
-    if( async === undefined ) async = true;
-    if( !type ) type = 'text/javascript';
+    if( typeof async === 'undefined' ) async = true;
+    if( !type ) type = dJsType;
     var arr = [];
     for( var i = 0; i < scriptsArr.length; i++ ){
       var tag = document.createElement('script');
@@ -77,8 +80,8 @@
     return arr;
   };
   LazyLoader.css = function( scriptsArr, rel, type ){
-    if( !rel ) rel = 'stylesheet';
-    if( !type ) type = 'text/css';
+    if( !rel ) rel = dCssRel;
+    if( !type ) type = dCssType;
     var arr = [];
     for( var i = 0; i < scriptsArr.length; i++ ){
       var tag = document.createElement('link');
@@ -95,6 +98,7 @@
     if( !config ) return;
     if( !body ) _loadBody();
     body.appendChild( config._tag );
+    config._inserted = true;
     configCache[name] = config;
     configCacheRemoved[name] = null;
   };
@@ -103,6 +107,7 @@
     if( !config ) return;
     var parent = config._tag.parentElement;
     if( parent ) parent.removeChild( config._tag );
+    config._inserted = false;
     if( !clear ) configCacheRemoved[name] = config;
     configCache[name] = null;
   };
@@ -110,19 +115,25 @@
     configCacheRemoved = {};
   };
   LazyLoader.add = function( config ){
-    if( !(config instanceof Object) ) return;
-    if( !config.name ) config.name = configNamePrefix + configNamePrefixId++;
+    if( !(typeof config === 'object') ) return;
+    if( !config.name ) config.name = config.src;
     if( configCache[config.name] || configCacheRemoved[config.name] ){
       window.console.error(logPrefix+'The config with name "'+ config.name +'" already exists! Call "remove( <name>, true )" to remove it.');
       return;
     }
+    if( !config.type ) config.type = 'css';
+    if( !config.tag ) config.tag = { };
+    if( typeof config.tag.async === 'undefined' ) config.tag.async = true;
+    if( !config.tag.rel ) config.tag.rel = config.type === 'js'? dJsRel : dCssRel;
+    if( !config.tag.type ) config.tag.type = config.type === 'js'? dJsType : dCssType;
     var tags = null;
-    if( config.type === 'js' ) tags = LazyLoader.script( [config.tag.src || config.tag.href], config.async, config.type );
-    else if( config.type === 'css' ) tags = LazyLoader.css( [config.tag.src || config.tag.href], config.rel, config.type );
+    if( config.type === 'js' ) tags = LazyLoader.script( [config.src ], config.tag.async, config.tag.type );
+    else if( config.type === 'css' ) tags = LazyLoader.css( [config.src ], config.tag.rel, config.tag.type );
     if( !tags || !tags.length ){
       window.console.error(logPrefix+'Config the "type" with "js" or "css".');
       return;
     }
+    if( config.remove === undefined ) config.remove = true;
     config._tag = tags[0];
     configCache[config.name] = config;
     if( config.predicates ){
@@ -131,9 +142,13 @@
     }else LazyLoader.load( tags );
   };
   
+  LazyLoader.refresh = function(){
+    _listener();
+  };
+  
   //=====================  window resize listener  ======================
   function _comp( arrComp, systemValue ){
-    if( arrComp instanceof Function ) arrComp(  );
+    if( typeof arrComp === 'function' ) return arrComp(  );
     else if ( arrComp instanceof Array ) switch( arrComp[0] ){
       case '!=': return systemValue !== arrComp[1]; break;
       case '=' : return systemValue === arrComp[1]; break;
@@ -142,16 +157,19 @@
       case '>' : return systemValue >   arrComp[1]; break;
       case '>=': return systemValue >=  arrComp[1]; break;
     }
+    return false;
   }
-  function _check( obj ){
-    var pred = obj.predicates;
+  function _check( config ){
+    var pred = config.predicates;
+    if( config._inserted && !config.remove ) return;
     if( 
-      ( !pred.innerWidth || _comp(pred.innerWidth, window.innerWidth) )
+         ( !pred.innerWidth || _comp(pred.innerWidth, window.innerWidth) )
       && ( !pred.innerHeight || _comp(pred.innerHeight, window.innerHeight) )
+      && ( !pred.f || _comp(pred.f, null) )
     ){
-      LazyLoader.insert( obj.name );
+      LazyLoader.insert( config.name );
     }else{
-      LazyLoader.remove( obj.name );
+      LazyLoader.remove( config.name );
     }
   }
   function _listenerFor( arrObj ){
@@ -163,7 +181,7 @@
   }
   
   var timeout = null;
-  function _listener( ev ){
+  function _listener(  ){
     if( timeout ) clearTimeout( timeout );
     timeout = setTimeout(function(){
       _listenerFor( configCache );
