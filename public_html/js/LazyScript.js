@@ -84,6 +84,7 @@
     if( typeof async === 'undefined' ) async = true;
     if( !type ) type = dJsType;
     var arr = [];
+    if( typeof scriptsArr === 'string' ) scriptsArr = [ scriptsArr ];
     for( var i = 0; i < scriptsArr.length; i++ ){
       var tag = document.createElement('script');
       tag.type = type;
@@ -97,6 +98,7 @@
     if( !rel ) rel = dCssRel;
     if( !type ) type = dCssType;
     var arr = [];
+    if( typeof scriptsArr === 'string' ) scriptsArr = [ scriptsArr ];
     for( var i = 0; i < scriptsArr.length; i++ ){
       var tag = document.createElement('link');
       tag.type = type;
