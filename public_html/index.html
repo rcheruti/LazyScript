@@ -19,7 +19,15 @@
     
     <script src="js/LazyScript.js"></script>
     <script>
+      var logDiv = document.getElementById('log');
+      window.log = function(str){
+        var temp = logDiv.innerHTML;
+        logDiv.innerHTML = temp + '<br/>' + str;
+      };
+      
+      
       LazyLoader.load( LazyLoader.script( ['js/alert.js'] ) );
+      LazyLoader.load( LazyLoader.script( ['js/alertDelay.js'] ), 1000 );
       LazyLoader.load( LazyLoader.css( ['css/style.css'] ) );
       LazyLoader.add({
         src: 'css/style_w500.css',

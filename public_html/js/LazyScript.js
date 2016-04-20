@@ -42,7 +42,8 @@
    *  
    * }
    */
-  var body = null,
+  var undefined, // <<--  undefined
+      body = null,
       configCache = {},
       configCacheRemoved = {},
       logPrefix = 'LazyLoader: ',
@@ -59,12 +60,23 @@
   //=====================  LazyLoader object  ======================
   var LazyLoader = {};
   
-  LazyLoader.load = function( arr ){
-    if( !(arr instanceof Array) ) return;
-    if( !body ) _loadBody();
-    for( var i = 0; i < arr.length; i++ ){
-      body.appendChild( arr[i] );
+  LazyLoader.load = function( arr, delay ){
+    if( arr instanceof Array ){
+      if( !body ) _loadBody();
+      if( delay ){
+        setTimeout(function(){
+          for( var i = 0; i < arr.length; i++ ){
+            body.appendChild( arr[i] );
+          }
+        }, delay);
+      }else{
+        for( var i = 0; i < arr.length; i++ ){
+          body.appendChild( arr[i] );
+        }
+      }
+      
     }
+    return LazyLoader;
   };
   LazyLoader.script = function( scriptsArr, async, type ){
     if( typeof async === 'undefined' ) async = true;
@@ -139,7 +151,7 @@
     if( config.where ){
       configCacheRemoved[config.name] = config;
       _check( config );
-    }else LazyLoader.load( tags );
+    }else LazyLoader.load( tags, config.delay );
   };
   
   LazyLoader.refresh = function(){
