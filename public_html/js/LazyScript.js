@@ -58,7 +58,9 @@
   };
   
   //=====================  LazyLoader object  ======================
-  var LazyLoader = {};
+  var LazyLoader = {
+    resizeTimeout: 30
+  };
   
   LazyLoader.load = function( arr, delay ){
     if( arr instanceof Array ){
@@ -107,24 +109,29 @@
   
   LazyLoader.insert = function( name ){
     var config = configCacheRemoved[name];
-    if( !config ) return;
-    if( !body ) _loadBody();
-    body.appendChild( config._tag );
-    config._inserted = true;
-    configCache[name] = config;
-    configCacheRemoved[name] = null;
+    if( config ){
+      if( !body ) _loadBody();
+      body.appendChild( config._tag );
+      config._inserted = true;
+      configCache[name] = config;
+      configCacheRemoved[name] = null;
+    }
+    return LazyLoader;
   };
   LazyLoader.remove = function( name, clear ){
     var config = configCache[name];
-    if( !config ) return;
-    var parent = config._tag.parentElement;
-    if( parent ) parent.removeChild( config._tag );
-    config._inserted = false;
-    if( !clear ) configCacheRemoved[name] = config;
-    configCache[name] = null;
+    if( config ){
+      var parent = config._tag.parentElement;
+      if( parent ) parent.removeChild( config._tag );
+      config._inserted = false;
+      if( !clear ) configCacheRemoved[name] = config;
+      configCache[name] = null;
+    }
+    return LazyLoader;
   };
   LazyLoader.clearRemoved = function(){
     configCacheRemoved = {};
+    return LazyLoader;
   };
   LazyLoader.add = function( config ){
     if( !(typeof config === 'object') ) return;
@@ -152,10 +159,24 @@
       configCacheRemoved[config.name] = config;
       _check( config );
     }else LazyLoader.load( tags, config.delay );
+    
+    return LazyLoader;
   };
   
   LazyLoader.refresh = function(){
     _listener();
+    return LazyLoader;
+  };
+  
+  var activeRefreshListener = false;
+  LazyLoader.activeRefreshListener = function( val ){
+    if( val ){
+      if(!activeRefreshListener) window.addEventListener('resize', _listener, false);
+      activeRefreshListener = true;
+    }else{
+      if(activeRefreshListener) window.removeEventListener('resize', _listener, false);
+      activeRefreshListener = false;
+    }
   };
   
   //=====================  window resize listener  ======================
@@ -198,10 +219,11 @@
     timeout = setTimeout(function(){
       _listenerFor( configCache );
       _listenerFor( configCacheRemoved );
-    }, 50);
+      timeout = null;
+    }, LazyLoader.resizeTimeout );
     
   }
-  window.addEventListener('resize', _listener, false);
+  LazyLoader.activeRefreshListener( true );
   
   //=====================  public LazyLoader object  ======================
   window.LazyLoader = LazyLoader;
