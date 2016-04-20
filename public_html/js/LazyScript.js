@@ -22,7 +22,7 @@
    *    // valores disponíveis: 'js', 'css'
    *  src: 'string' : o link a ser carregado
    *  
-   *  predicates: 'object' {} : informa as restrições dessa configuração
+   *  where: 'object' {} : informa as restrições dessa configuração
    *    {
    *      innerHeight: 'array|function' [ 'string', 'number' ] : verifica com o valor de "window.innerHeight"
    *      innerWidth: 'array|function' [ 'string', 'number' ] : verifica com o valor de "window.innerWidth"
@@ -136,7 +136,7 @@
     if( config.remove === undefined ) config.remove = true;
     config._tag = tags[0];
     configCache[config.name] = config;
-    if( config.predicates ){
+    if( config.where ){
       configCacheRemoved[config.name] = config;
       _check( config );
     }else LazyLoader.load( tags );
@@ -160,7 +160,7 @@
     return false;
   }
   function _check( config ){
-    var pred = config.predicates;
+    var pred = config.where;
     if( config._inserted && !config.remove ) return;
     if( 
          ( !pred.innerWidth || _comp(pred.innerWidth, window.innerWidth) )
@@ -175,7 +175,7 @@
   function _listenerFor( arrObj ){
     for( var g in arrObj ){
       var obj = arrObj[g];
-      if( !obj || !obj.predicates ) continue;
+      if( !obj || !obj.where ) continue;
       _check(obj);
     }
   }

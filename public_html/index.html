@@ -23,16 +23,16 @@
       LazyLoader.load( LazyLoader.css( ['css/style.css'] ) );
       LazyLoader.add({
         src: 'css/style_w500.css',
-        predicates:{ innerWidth: ['>', 500] }
+        where:{ innerWidth: ['>', 500] }
       });
       LazyLoader.add({
         src: 'css/style_w400.css',
-        predicates:{ innerWidth: ['<', 400] },
+        where:{ innerWidth: ['<', 400] },
         remove: false
       });
       LazyLoader.add({
         src: 'css/tema1.css',
-        predicates:{
+        where:{
           f: function(){
             var el = document.getElementById('tema1Input');
             return el.checked;
